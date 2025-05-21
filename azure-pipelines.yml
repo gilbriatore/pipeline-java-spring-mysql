@@ -71,3 +71,5 @@ stages:
               azureSubscription: 'DevOps_APPs'
               appName: 'azspring'
               package: '$(Pipeline.Workspace)/drop/**/*.jar'
+
+# azspring-fmcgbtayb8dpf7g3.brazilsouth-01.azurewebsites.net
