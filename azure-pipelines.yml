@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - main
+      - calculadora
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -10,4 +10,4 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      goals: 'clean package'
+      goals: 'clean verify'
