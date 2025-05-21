@@ -1,25 +1,51 @@
 trigger:
   branches:
     include:
-      - deploy
+      - stages
 
-pool:
-  vmImage: 'ubuntu-latest'
+stages:
+  - stage: Build
+    displayName: "Build Stage"
+    jobs:
+      - job: Build
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package'
 
-steps:
-  - task: Maven@4
-    inputs:
-      mavenPomFile: 'pom.xml'
-      goals: 'clean package'
+  - stage: Test
+    displayName: "Test Stage"
+    dependsOn: Build
+    jobs:
+      - job: Test
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'test'
 
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      failTaskOnFailedTests: true
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              failTaskOnFailedTests: true
 
-  - task: AzureWebApp@1
-    inputs:
-      azureSubscription: 'DevOps_APPs'
-      appName: 'azspring'
-      package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
+  - stage: Deploy
+    displayName: "Deploy Stage"
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: Deploy
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '<NOME-DA-SERVICE-CONNECTION>'
+              appName: '<NOME-DO-APP-SERVICE>'
+              package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
