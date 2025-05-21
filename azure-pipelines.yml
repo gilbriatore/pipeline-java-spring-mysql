@@ -16,6 +16,11 @@ stages:
               mavenPomFile: 'pom.xml'
               goals: 'clean package'
 
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(System.DefaultWorkingDirectory)/target'
+              artifactName: 'drop'
+
   - stage: Test
     displayName: "Test Stage"
     dependsOn: Build
@@ -44,8 +49,12 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: 'drop'
+
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'DevOps_APPs'
               appName: 'azspring'
-              package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
+              package: '$(Pipeline.Workspace)/drop/*.jar'
