@@ -46,6 +46,6 @@ stages:
         steps:
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: '<NOME-DA-SERVICE-CONNECTION>'
-              appName: '<NOME-DO-APP-SERVICE>'
+              azureSubscription: 'DevOps_APPs'
+              appName: 'azspring'
               package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
