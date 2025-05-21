@@ -1,8 +1,7 @@
 trigger:
   branches:
     include:
-      - integration
-
+      - deploy
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -11,4 +10,16 @@ steps:
   - task: Maven@4
     inputs:
       mavenPomFile: 'pom.xml'
-      goals: 'clean verify'
+      goals: 'clean package'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      failTaskOnFailedTests: true
+
+  - task: AzureWebApp@1
+    inputs:
+      azureSubscription: 'DevOps_APPs'
+      appName: 'azspring'
+      package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
