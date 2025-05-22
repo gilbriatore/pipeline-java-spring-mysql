@@ -23,3 +23,5 @@ steps:
       azureSubscription: 'DevOps_APPs'
       appName: 'azspring'
       package: '$(System.DefaultWorkingDirectory)/**/target/*.jar'
+
+# azspring-fmcgbtayb8dpf7g3.brazilsouth-01.azurewebsites.net
