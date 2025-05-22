@@ -21,11 +21,10 @@ stages:
               echo "Conteúdo após o build:"
               ls -R $(System.DefaultWorkingDirectory)
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             inputs:
-              pathToPublish: '$(System.DefaultWorkingDirectory)/target'
-              artifactName: 'drop'
-              publishLocation: 'PipelineArtifact'
+              targetPath: '$(System.DefaultWorkingDirectory)/target'
+              artifact: 'drop'
 
   - stage: Test
     displayName: "Test Stage"
@@ -57,10 +56,10 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: DownloadBuildArtifacts@0
+          - task: DownloadPipelineArtifact@2
             inputs:
-              artifactName: 'drop'
-              downloadPath: '$(Pipeline.Workspace)/drop'
+              artifact: 'drop'
+              path: '$(Pipeline.Workspace)/drop'
 
           - script: |
               echo "Conteúdo após download:"
@@ -71,5 +70,3 @@ stages:
               azureSubscription: 'DevOps_APPs'
               appName: 'azspring'
               package: '$(Pipeline.Workspace)/drop/**/*.jar'
-
-# azspring-fmcgbtayb8dpf7g3.brazilsouth-01.azurewebsites.net
