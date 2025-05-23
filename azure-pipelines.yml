@@ -7,7 +7,41 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+  - task: Bash@3
+    displayName: 'Instalar MySQL Server'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+
+  - task: Bash@3
+    displayName: 'Configurar MySQL e criar banco spring'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo systemctl start mysql
+        sudo mysql -e "CREATE DATABASE IF NOT EXISTS spring;"
+        sudo mysql -e "CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'springpass';"
+        sudo mysql -e "GRANT ALL PRIVILEGES ON spring.* TO 'springuser'@'localhost';"
+        sudo mysql -e "FLUSH PRIVILEGES;"
+
+  - task: Bash@3
+    displayName: 'Testar conexão com banco'
+    inputs:
+      targetType: 'inline'
+      script: |
+        mysql -u springuser -pspringpass -e "SHOW DATABASES;"
+
   - task: Maven@4
+    displayName: 'Build com Maven'
     inputs:
       mavenPomFile: 'pom.xml'
-      goals: 'clean verify'
+      goals: 'clean package'
+
+  - task: Bash@3
+    displayName: 'Executar aplicação'
+    inputs:
+      targetType: 'inline'
+      script: |
+        java -jar target/*.jar
