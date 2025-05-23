@@ -3,7 +3,6 @@ trigger:
     include:
       - integration
 
-
 pool:
   vmImage: 'ubuntu-latest'
 
