@@ -78,4 +78,9 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        java -jar target/*.jar
+        java -jar target/*.jar &
+        APP_PID=$!
+        echo "Aplicação rodando com PID $APP_PID"
+        sleep 10
+        echo "Finalizando aplicação..."
+        kill $APP_PID
