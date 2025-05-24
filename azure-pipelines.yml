@@ -11,7 +11,7 @@ variables:
   SPRING_DB_NAME: 'spring'
 
 steps:
-  # ✅ Instalar MySQL
+  # Instalar o MySQL
   - task: Bash@3
     displayName: 'Instalar MySQL Server'
     inputs:
@@ -20,7 +20,7 @@ steps:
         sudo apt-get update
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
 
-  # ✅ Extrair senha de debian-sys-maint
+  # Extrair senha de debian-sys-maint
   - task: Bash@3
     displayName: 'Extrair senha de debian-sys-maint'
     name: extractDebianPassword
@@ -30,7 +30,7 @@ steps:
         PASS=$(sudo grep password /etc/mysql/debian.cnf | head -n1 | awk '{print $3}')
         echo "##vso[task.setvariable variable=DEBIAN_PASS;issecret=true]$PASS"
 
-  # ✅ Alterar plugin e senha do root
+  # Alterar plugin e senha do root
   - task: Bash@3
     displayName: 'Alterar plugin e senha do root'
     inputs:
@@ -43,7 +43,7 @@ steps:
         mysql -u debian-sys-maint -p$(DEBIAN_PASS) -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}';"
         mysql -u debian-sys-maint -p$(DEBIAN_PASS) -e "FLUSH PRIVILEGES;"
 
-  # ✅ Criar banco spring
+  # Criar banco de dados spring
   - task: Bash@3
     displayName: 'Criar banco spring com root'
     inputs:
@@ -54,7 +54,7 @@ steps:
         
         mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
 
-  # ✅ Testar conexão com root
+  # Testar conexão com root
   - task: Bash@3
     displayName: 'Testar conexão com root'
     inputs:
@@ -65,14 +65,14 @@ steps:
         
         mysql -u root -p${MYSQL_ROOT_PASS} -e "SHOW DATABASES;"
 
-  # ✅ Build com Maven
+  # Executar build com Maven
   - task: Maven@4
     displayName: 'Build com Maven'
     inputs:
       mavenPomFile: 'pom.xml'
       goals: 'clean package'
 
-  # ✅ Executar aplicação Spring Boot
+  # Executar aplicação Spring Boot
   - task: Bash@3
     displayName: 'Executar aplicação Spring Boot'
     inputs:
