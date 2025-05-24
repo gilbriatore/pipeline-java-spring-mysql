@@ -7,9 +7,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  MYSQL_ROOT_PASS: '12345!'
-  SPRING_DB_USER: 'springuser'
-  SPRING_DB_PASS: 'springpass'
+  MYSQL_ROOT_PASS: '12345'
   SPRING_DB_NAME: 'spring'
 
 steps:
@@ -22,26 +20,23 @@ steps:
         sudo apt-get update
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
 
-  # ✅ Alterar root para mysql_native_password
+  # ✅ Alterar plugin de autenticação e definir senha para root
   - task: Bash@3
-    displayName: 'Alterar plugin de autenticação do root'
+    displayName: 'Configurar root do MySQL'
     inputs:
       targetType: 'inline'
       script: |
         sudo systemctl start mysql
-        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
+        echo "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}'; FLUSH PRIVILEGES;" > alter_root.sql
+        sudo mysql < alter_root.sql
 
-  # ✅ Criar banco e usuário spring
+  # ✅ Criar banco de dados spring
   - task: Bash@3
-    displayName: 'Criar banco spring e usuário'
+    displayName: 'Criar banco de dados spring'
     inputs:
       targetType: 'inline'
       script: |
         mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
-        mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE USER IF NOT EXISTS '${SPRING_DB_USER}'@'localhost' IDENTIFIED BY '${SPRING_DB_PASS}';"
-        mysql -u root -p${MYSQL_ROOT_PASS} -e "GRANT ALL PRIVILEGES ON ${SPRING_DB_NAME}.* TO '${SPRING_DB_USER}'@'localhost';"
-        mysql -u root -p${MYSQL_ROOT_PASS} -e "FLUSH PRIVILEGES;"
 
   # ✅ Testar conexão
   - task: Bash@3
@@ -49,7 +44,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        mysql -u ${SPRING_DB_USER} -p${SPRING_DB_PASS} -e "SHOW DATABASES;"
+        mysql -u root -p${MYSQL_ROOT_PASS} -e "SHOW DATABASES;"
 
   # ✅ Build com Maven
   - task: Maven@4
