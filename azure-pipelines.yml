@@ -7,12 +7,13 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
+  MYSQL_ROOT_PASS: '12345!'
   SPRING_DB_USER: 'springuser'
   SPRING_DB_PASS: 'springpass'
   SPRING_DB_NAME: 'spring'
 
 steps:
-  # ✅ Instalar MySQL Server
+  # ✅ Instalar MySQL
   - task: Bash@3
     displayName: 'Instalar MySQL Server'
     inputs:
@@ -21,40 +22,28 @@ steps:
         sudo apt-get update
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
 
-  # ✅ Testar acesso MySQL
+  # ✅ Alterar root para mysql_native_password
   - task: Bash@3
-    displayName: 'Testar acesso sudo mysql'
-    inputs:
-      targetType: 'inline'
-      script: |
-        sudo mysql --version
-        sudo mysql --execute="SELECT USER();"
-
-  # ✅ Configurar MySQL e criar banco spring
-  - task: Bash@3
-    displayName: 'Configurar MySQL e criar banco spring'
+    displayName: 'Alterar plugin de autenticação do root'
     inputs:
       targetType: 'inline'
       script: |
         sudo systemctl start mysql
-        
-        # Tentativa com sudo mysql --execute
-        set -e
-        if ! sudo mysql --execute="SELECT 1;" ; then
-          echo "Não foi possível acessar via sudo mysql --execute. Tentando ajustar root..."
-          sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'RootPass123!';"
-          sudo mysql -e "FLUSH PRIVILEGES;"
-        else
-          echo "Acesso sudo mysql OK"
-        fi
-        
-        # Criar banco e usuário
-        sudo mysql --execute="CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
-        sudo mysql --execute="CREATE USER IF NOT EXISTS '${SPRING_DB_USER}'@'localhost' IDENTIFIED BY '${SPRING_DB_PASS}';"
-        sudo mysql --execute="GRANT ALL PRIVILEGES ON ${SPRING_DB_NAME}.* TO '${SPRING_DB_USER}'@'localhost';"
-        sudo mysql --execute="FLUSH PRIVILEGES;"
+        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}';"
+        sudo mysql -e "FLUSH PRIVILEGES;"
 
-  # ✅ Testar conexão com banco spring
+  # ✅ Criar banco e usuário spring
+  - task: Bash@3
+    displayName: 'Criar banco spring e usuário'
+    inputs:
+      targetType: 'inline'
+      script: |
+        mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
+        mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE USER IF NOT EXISTS '${SPRING_DB_USER}'@'localhost' IDENTIFIED BY '${SPRING_DB_PASS}';"
+        mysql -u root -p${MYSQL_ROOT_PASS} -e "GRANT ALL PRIVILEGES ON ${SPRING_DB_NAME}.* TO '${SPRING_DB_USER}'@'localhost';"
+        mysql -u root -p${MYSQL_ROOT_PASS} -e "FLUSH PRIVILEGES;"
+
+  # ✅ Testar conexão
   - task: Bash@3
     displayName: 'Testar conexão com banco spring'
     inputs:
