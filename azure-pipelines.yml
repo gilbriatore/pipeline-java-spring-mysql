@@ -1,12 +1,18 @@
 trigger:
   branches:
     include:
-      - repository
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  SPRING_DB_USER: 'springuser'
+  SPRING_DB_PASS: 'springpass'
+  SPRING_DB_NAME: 'spring'
+
 steps:
+  # ✅ Instalar MySQL Server
   - task: Bash@3
     displayName: 'Instalar MySQL Server'
     inputs:
@@ -15,32 +21,57 @@ steps:
         sudo apt-get update
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
 
+  # ✅ Testar acesso MySQL
+  - task: Bash@3
+    displayName: 'Testar acesso sudo mysql'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo mysql --version
+        sudo mysql --execute="SELECT USER();"
+
+  # ✅ Configurar MySQL e criar banco spring
   - task: Bash@3
     displayName: 'Configurar MySQL e criar banco spring'
     inputs:
       targetType: 'inline'
       script: |
         sudo systemctl start mysql
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS spring;"
-        sudo mysql -e "CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'springpass';"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON spring.* TO 'springuser'@'localhost';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
+        
+        # Tentativa com sudo mysql --execute
+        set -e
+        if ! sudo mysql --execute="SELECT 1;" ; then
+          echo "Não foi possível acessar via sudo mysql --execute. Tentando ajustar root..."
+          sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'RootPass123!';"
+          sudo mysql -e "FLUSH PRIVILEGES;"
+        else
+          echo "Acesso sudo mysql OK"
+        fi
+        
+        # Criar banco e usuário
+        sudo mysql --execute="CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
+        sudo mysql --execute="CREATE USER IF NOT EXISTS '${SPRING_DB_USER}'@'localhost' IDENTIFIED BY '${SPRING_DB_PASS}';"
+        sudo mysql --execute="GRANT ALL PRIVILEGES ON ${SPRING_DB_NAME}.* TO '${SPRING_DB_USER}'@'localhost';"
+        sudo mysql --execute="FLUSH PRIVILEGES;"
 
+  # ✅ Testar conexão com banco spring
   - task: Bash@3
-    displayName: 'Testar conexão com banco'
+    displayName: 'Testar conexão com banco spring'
     inputs:
       targetType: 'inline'
       script: |
-        mysql -u springuser -pspringpass -e "SHOW DATABASES;"
+        mysql -u ${SPRING_DB_USER} -p${SPRING_DB_PASS} -e "SHOW DATABASES;"
 
+  # ✅ Build com Maven
   - task: Maven@4
     displayName: 'Build com Maven'
     inputs:
       mavenPomFile: 'pom.xml'
       goals: 'clean package'
 
+  # ✅ Executar aplicação Spring Boot
   - task: Bash@3
-    displayName: 'Executar aplicação'
+    displayName: 'Executar aplicação Spring Boot'
     inputs:
       targetType: 'inline'
       script: |
