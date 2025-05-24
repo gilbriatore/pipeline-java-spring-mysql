@@ -30,23 +30,30 @@ steps:
         PASS=$(sudo grep password /etc/mysql/debian.cnf | head -n1 | awk '{print $3}')
         echo "##vso[task.setvariable variable=DEBIAN_PASS;issecret=true]$PASS"
 
-  # ✅ Alterar plugin e senha do root usando debian-sys-maint
+  # ✅ Alterar plugin e senha do root
   - task: Bash@3
     displayName: 'Alterar plugin e senha do root'
     inputs:
       targetType: 'inline'
       script: |
+        sudo systemctl start mysql
+        echo "Aguardando MySQL iniciar..."
+        sleep 5
+        
         mysql -u debian-sys-maint -p$(DEBIAN_PASS) <<-EOSQL
           ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASS}';
           FLUSH PRIVILEGES;
-        EOSQL
+          EOSQL
 
-  # ✅ Criar banco de dados spring com root
+  # ✅ Criar banco spring
   - task: Bash@3
     displayName: 'Criar banco spring com root'
     inputs:
       targetType: 'inline'
       script: |
+        sudo systemctl start mysql
+        sleep 5
+  
         mysql -u root -p${MYSQL_ROOT_PASS} -e "CREATE DATABASE IF NOT EXISTS ${SPRING_DB_NAME};"
 
   # ✅ Testar conexão com root
@@ -55,6 +62,9 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
+        sudo systemctl start mysql
+        sleep 5
+  
         mysql -u root -p${MYSQL_ROOT_PASS} -e "SHOW DATABASES;"
 
   # ✅ Build com Maven
