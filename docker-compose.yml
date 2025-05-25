@@ -20,6 +20,7 @@ services:
   app:
     image: myacrpucpr.azurecr.io/azspring-app:${BUILD_ID}
     environment:
+      DEBUG: true
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/spring
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: pass
