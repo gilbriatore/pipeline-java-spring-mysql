@@ -19,11 +19,30 @@ stages:
         steps:
           - checkout: self
 
+          - script: |
+              echo "Subindo MySQL com docker-compose..."
+              docker-compose up -d db
+            displayName: 'Start MySQL container'
+
+          - script: |
+              echo "Aguardando MySQL ficar disponível..."
+              for i in {1..10}; do
+                docker exec $(docker ps -qf "name=db") mysqladmin ping -h "localhost" -uroot -proot && break
+                echo "Aguardando..."
+                sleep 5
+              done
+            displayName: 'Wait for MySQL readiness'
+
           - task: Maven@4
             displayName: 'Run Unit and Integration Tests'
             inputs:
               mavenPomFile: 'pom.xml'
               goals: 'verify'
+
+          - script: |
+              echo "Derrubando MySQL..."
+              docker-compose down
+            displayName: 'Stop MySQL container'
 
           - task: PublishTestResults@2
             inputs:
