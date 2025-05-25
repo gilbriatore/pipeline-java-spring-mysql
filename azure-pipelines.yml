@@ -49,6 +49,8 @@ stages:
           - checkout: self
 
           - script: |
+              echo "Realizando login no ACR..."
+              echo $(ACR_PASSWORD) | docker login myacrpucpr.azurecr.io -u $(ACR_USERNAME) --password-stdin
               echo "Executando testes dentro do container..."
               docker run --rm $(containerRegistry)/$(imageName):$(dockerTag) mvn test
             displayName: 'Run Tests in Docker'
