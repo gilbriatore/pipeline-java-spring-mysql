@@ -9,20 +9,45 @@ variables:
   dockerTag: '$(Build.BuildId)'
 
 stages:
-  - stage: Build
-    displayName: "Build Stage"
+  - stage: Test
+    displayName: "Test Stage"
     jobs:
-      - job: Build
-        displayName: "Build Job"
+      - job: Test
+        displayName: "Test Job"
         pool:
           vmImage: 'ubuntu-latest'
         steps:
           - checkout: self
 
           - task: Maven@4
+            displayName: 'Run Unit and Integration Tests'
             inputs:
               mavenPomFile: 'pom.xml'
-              goals: 'clean package'
+              goals: 'verify'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              failTaskOnFailedTests: true
+
+  - stage: BuildAndPush
+    displayName: "Build and Push Docker Image"
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: Build
+        displayName: "Build and Push Job"
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: Maven@4
+            displayName: 'Package Application'
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'clean package -DskipTests'
 
           - script: |
               echo "Construindo imagem Docker..."
@@ -37,33 +62,9 @@ stages:
               tags: '$(dockerTag)'
               containerRegistry: 'MyACRServiceConnection'
 
-  - stage: Test
-    displayName: "Test Stage"
-    dependsOn: Build
-    jobs:
-      - job: Test
-        displayName: "Test Job"
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
-
-          - script: |
-              echo "Realizando login no ACR..."
-              echo $(ACR_PASSWORD) | docker login myacrpucpr.azurecr.io -u $(ACR_USERNAME) --password-stdin
-              echo "Executando testes dentro do container..."
-              docker run --rm $(containerRegistry)/$(imageName):$(dockerTag) mvn test
-            displayName: 'Run Tests in Docker'
-
-          - task: PublishTestResults@2
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              failTaskOnFailedTests: true
-
   - stage: Deploy
     displayName: "Deploy Stage"
-    dependsOn: Test
+    dependsOn: BuildAndPush
     condition: succeeded()
     jobs:
       - job: Deploy
@@ -71,11 +72,15 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - script: |
-              echo "Deploying container image..."
-              az webapp config container set \
-                --name azspring \
-                --resource-group myResourceGroup \
-                --docker-custom-image-name $(containerRegistry)/$(imageName):$(dockerTag) \
-                --docker-registry-server-url https://$(containerRegistry)
+          - task: AzureCLI@2
             displayName: 'Deploy to Azure Web App'
+            inputs:
+              azureSubscription: 'DevOps_APPs'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az webapp config container set \
+                  --name azspring \
+                  --resource-group myResourceGroup \
+                  --docker-custom-image-name $(containerRegistry)/$(imageName):$(dockerTag) \
+                  --docker-registry-server-url https://$(containerRegistry)
