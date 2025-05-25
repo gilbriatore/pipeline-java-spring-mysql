@@ -1,7 +1,12 @@
 trigger:
   branches:
     include:
-      - stages
+      - docker
+
+variables:
+  imageName: 'azspring-app'
+  containerRegistry: 'myacrpucpr.azurecr.io'
+  dockerTag: '$(Build.BuildId)'
 
 stages:
   - stage: Build
@@ -12,19 +17,25 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
+          - checkout: self
+
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
               goals: 'clean package'
 
           - script: |
-              echo "Conteúdo após o build:"
-              ls -R $(System.DefaultWorkingDirectory)
+              echo "Construindo imagem Docker..."
+              docker build -t $(containerRegistry)/$(imageName):$(dockerTag) .
+            displayName: 'Docker Build'
 
-          - task: PublishPipelineArtifact@1
+          - task: Docker@2
+            displayName: 'Push image to ACR'
             inputs:
-              targetPath: '$(System.DefaultWorkingDirectory)/target'
-              artifact: 'drop'
+              command: 'push'
+              repository: '$(imageName)'
+              tags: '$(dockerTag)'
+              containerRegistry: 'MyACRServiceConnection'
 
   - stage: Test
     displayName: "Test Stage"
@@ -35,10 +46,12 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'pom.xml'
-              goals: 'test'
+          - checkout: self
+
+          - script: |
+              echo "Executando testes dentro do container..."
+              docker run --rm $(containerRegistry)/$(imageName):$(dockerTag) mvn test
+            displayName: 'Run Tests in Docker'
 
           - task: PublishTestResults@2
             inputs:
@@ -56,17 +69,11 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact: 'drop'
-              path: '$(Pipeline.Workspace)/drop'
-
           - script: |
-              echo "Conteúdo após download:"
-              ls -R $(Pipeline.Workspace)/drop
-
-          - task: AzureWebApp@1
-            inputs:
-              azureSubscription: 'DevOps_APPs'
-              appName: 'azspring'
-              package: '$(Pipeline.Workspace)/drop/**/*.jar'
+              echo "Deploying container image..."
+              az webapp config container set \
+                --name azspring \
+                --resource-group myResourceGroup \
+                --docker-custom-image-name $(containerRegistry)/$(imageName):$(dockerTag) \
+                --docker-registry-server-url https://$(containerRegistry)
+            displayName: 'Deploy to Azure Web App'
