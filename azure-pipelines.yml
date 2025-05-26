@@ -20,8 +20,8 @@ stages:
           - checkout: self
 
           - script: |
-              echo "Subindo MySQL com docker-compose..."
-              docker-compose up -d db
+              echo "Subindo MySQL com docker compose..."
+              docker compose up -d db
             displayName: 'Start MySQL container'
 
           - script: |
@@ -41,7 +41,7 @@ stages:
 
           - script: |
               echo "Derrubando MySQL..."
-              docker-compose down
+              docker compose down
             displayName: 'Stop MySQL container'
 
           - task: PublishTestResults@2
