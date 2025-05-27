@@ -10,8 +10,6 @@ variables:
   resourceGroup: 'devops_1semestre'
   containerAppName: 'azspring'
   acrName: 'devopsacrpucpr'
-  acrUsername: $(acrUsername)
-  acrPassword: $(acrPassword)
 
 stages:
 
@@ -97,5 +95,8 @@ stages:
                   --resource-group $(resourceGroup) \
                   --image $(containerRegistry)/$(imageName):$(dockerTag) \
                   --registry-server $(containerRegistry) \
-                  --registry-username $(acrUsername) \
-                  --registry-password $(acrPassword)
+                  --registry-username "$ACR_USERNAME" \
+                  --registry-password "$ACR_PASSWORD"
+            env:
+              ACR_USERNAME: $(acrUsername)
+              ACR_PASSWORD: $(acrPassword)
