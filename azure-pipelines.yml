@@ -5,36 +5,41 @@ trigger:
 
 variables:
   imageName: 'azspring-app'
-  containerRegistry: 'myacrpucpr.azurecr.io'
+  containerRegistry: 'devopsacrpucpr.azurecr.io'
   dockerTag: '$(Build.BuildId)'
+  resourceGroup: 'devops_1semestre'
+  containerAppName: 'azspring'
 
 stages:
+
   - stage: Test
     displayName: "Test Stage"
     jobs:
       - job: Test
-        displayName: "Test Job"
+        displayName: "Run Unit and Integration Tests"
         pool:
           vmImage: 'ubuntu-latest'
         steps:
           - checkout: self
 
           - script: |
-              echo "Verificando Docker e Maven..."
+              echo "Verificando versões do Docker e Maven..."
               docker --version
               mvn -version
-            displayName: 'Check Docker and Maven'
+            displayName: 'Check Docker and Maven versions'
 
           - script: |
               echo "Executando testes com Testcontainers..."
               mvn verify
-            displayName: 'Run Unit and Integration Tests'
+            displayName: 'Run Tests with Testcontainers'
 
           - task: PublishTestResults@2
+            displayName: 'Publicar resultados de testes'
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               failTaskOnFailedTests: true
+
   - stage: BuildAndPush
     displayName: "Build and Push Docker Image"
     dependsOn: Test
@@ -54,7 +59,7 @@ stages:
               goals: 'clean package -DskipTests'
 
           - script: |
-              echo "Construindo imagem Docker..."
+              echo "Construindo a imagem Docker..."
               docker build -t $(containerRegistry)/$(imageName):$(dockerTag) .
             displayName: 'Docker Build'
 
@@ -72,7 +77,7 @@ stages:
     condition: succeeded()
     jobs:
       - job: Deploy
-        displayName: "Deploy Job"
+        displayName: "Deploy to Azure Container App"
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -83,8 +88,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                echo "Realizando deploy para Azure Container App..."
                 az containerapp update \
-                  --name azspring \
-                  --resource-group myResourceGroup \
+                  --name $(containerAppName) \
+                  --resource-group $(resourceGroup) \
                   --image $(containerRegistry)/$(imageName):$(dockerTag)
-
