@@ -10,6 +10,8 @@ variables:
   resourceGroup: 'devops_1semestre'
   containerAppName: 'azspring'
   acrName: 'devopsacrpucpr'
+  acrUsername: $(acrUsername)
+  acrPassword: $(acrPassword)
 
 stages:
 
@@ -83,53 +85,17 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - task: AzureCLI@2
-            displayName: 'Ativar Identidade Gerenciada no Container App'
-            inputs:
-              azureSubscription: 'MyRMServiceConnection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                echo "Ativando Identidade Gerenciada no Container App..."
-                az containerapp identity assign \
-                  --name $(containerAppName) \
-                  --resource-group $(resourceGroup)
-
-          - task: AzureCLI@2
-            displayName: 'Conceder permissão AcrPull para Container App'
-            inputs:
-              azureSubscription: 'MyRMServiceConnection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                echo "Obtendo o principalId da Identidade Gerenciada..."
-                PRINCIPAL_ID=$(az containerapp show \
-                  --name $(containerAppName) \
-                  --resource-group $(resourceGroup) \
-                  --query identity.principalId \
-                  --output tsv)
-
-                echo "Obtendo o ID do ACR..."
-                ACR_ID=$(az acr show \
-                  --name $(acrName) \
-                  --resource-group $(resourceGroup) \
-                  --query id \
-                  --output tsv)
-
-                echo "Atribuindo permissão AcrPull..."
-                az role assignment create \
-                  --assignee $PRINCIPAL_ID \
-                  --scope $ACR_ID \
-                  --role AcrPull
-
-          - task: AzureCLI@2
             displayName: 'Deploy to Azure Container App'
             inputs:
               azureSubscription: 'MyRMServiceConnection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                echo "Realizando deploy para Azure Container App..."
+                echo "Realizando deploy para Azure Container App com Admin User..."
                 az containerapp update \
                   --name $(containerAppName) \
                   --resource-group $(resourceGroup) \
-                  --image $(containerRegistry)/$(imageName):$(dockerTag)
+                  --image $(containerRegistry)/$(imageName):$(dockerTag) \
+                  --registry-server $(containerRegistry) \
+                  --registry-username $(acrUsername) \
+                  --registry-password $(acrPassword)
