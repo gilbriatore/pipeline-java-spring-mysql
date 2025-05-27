@@ -5,6 +5,14 @@ spring:
     password: D&vops12345
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    hibernate:
+      ddl-auto: update  # Em produção, avalie se quer update ou validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false  # Evite mostrar SQL em produção
+  main:
+    allow-bean-definition-overriding: true
+
+server:
+  port: 8080  # Pode ajustar se estiver usando outra porta no Azure Container App
