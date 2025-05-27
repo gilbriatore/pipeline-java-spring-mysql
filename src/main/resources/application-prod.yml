@@ -1,16 +1,20 @@
 spring:
   datasource:
+    hikari:
+      connection-timeout: 30000
+      initialization-fail-timeout: -1
+      validation-timeout: 5000
     url: jdbc:mysql://devopsmysqlserver.mysql.database.azure.com:3306/spring?useSSL=true&requireSSL=true
     username: azuredevops
     password: D&vops12345
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update  # Em produção, avalie se quer update ou validate
+      ddl-auto: update  # Em produção, avaliar se update ou validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: false  # Evite mostrar SQL em produção
+    show-sql: false  # Evitar mostrar SQL em produção
   main:
     allow-bean-definition-overriding: true
 
@@ -21,4 +25,4 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
 server:
-  port: 80  # Pode ajustar se estiver usando outra porta no Azure Container App
+  port: 80  # Porta no Azure Container App
