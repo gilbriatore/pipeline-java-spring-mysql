@@ -84,7 +84,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Deploy to Azure Container App'
             inputs:
-              azureSubscription: 'DevOps_APPs'
+              azureSubscription: 'MyRMServiceConnection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
