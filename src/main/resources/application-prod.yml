@@ -15,4 +15,4 @@ spring:
     allow-bean-definition-overriding: true
 
 server:
-  port: 8080  # Pode ajustar se estiver usando outra porta no Azure Container App
+  port: 80  # Pode ajustar se estiver usando outra porta no Azure Container App
