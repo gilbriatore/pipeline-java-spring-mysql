@@ -9,7 +9,6 @@ variables:
   dockerTag: '$(Build.BuildId)'
   resourceGroup: 'devops_1semestre'
   containerAppName: 'azspring'
-  acrName: 'devopsacrpucpr'
 
 stages:
 
@@ -89,14 +88,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                echo "Realizando deploy para Azure Container App com Admin User..."
+                echo "Realizando deploy para Azure Container App..."
                 az containerapp update \
                   --name $(containerAppName) \
                   --resource-group $(resourceGroup) \
-                  --image $(containerRegistry)/$(imageName):$(dockerTag) \
-                  --registry-server $(containerRegistry) \
-                  --registry-username "$ACR_USERNAME" \
-                  --registry-password "$ACR_PASSWORD"
-            env:
-              ACR_USERNAME: $(acrUsername)
-              ACR_PASSWORD: $(acrPassword)
+                  --image $(containerRegistry)/$(imageName):$(dockerTag)
