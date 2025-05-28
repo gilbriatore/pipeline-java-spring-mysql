@@ -68,5 +68,5 @@ stages:
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'DevOps_APPs'
-              appName: 'azspring'
+              appName: 'devopspucpr'
               package: '$(Pipeline.Workspace)/drop/**/*.jar'
