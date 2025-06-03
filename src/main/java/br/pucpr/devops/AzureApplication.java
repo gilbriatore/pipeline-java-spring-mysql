@@ -14,5 +14,4 @@ public class AzureApplication {
         ConnectionString.configure("InstrumentationKey=c4d73764-91fc-46b0-bf01-359883323bad;IngestionEndpoint=https://brazilsouth-0.in.applicationinsights.azure.com/");
         SpringApplication.run(AzureApplication.class, args);
     }
-
 }

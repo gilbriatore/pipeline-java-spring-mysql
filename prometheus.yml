@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-boot-azure'
+    metrics_path: '/actuator/prometheus'
+    scheme: https
+    static_configs:
+      - targets:
+          - devopspucpr-h4enezgndfcqf0bu.brazilsouth-01.azurewebsites.net
