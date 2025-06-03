@@ -38,13 +38,18 @@ stages:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
-              goals: 'test'
+              goals: 'verifiy'
 
           - task: PublishTestResults@2
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               failTaskOnFailedTests: true
+
+          - script: |
+              echo "Arquivos de cobertura encontrados:"
+              find $(System.DefaultWorkingDirectory) -name 'jacoco.xml'
+            displayName: 'Debug: Procurar jacoco.xml'
 
           - task: PublishCodeCoverageResults@1
             inputs:
