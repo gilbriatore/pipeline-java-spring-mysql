@@ -15,10 +15,9 @@ easy? [Use the template at the bottom](#editing-this-readme)!
   push an existing Git repository with the following command:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/gilbriatore/2025/devops/pipeline-java-spring-mysql.git
-git branch -M main
-git push -uf origin main
+docker run -d -p 9090:9090 -v "prometheus.yml:/etc/prometheus/prometheus.yml" prom/prometheus
+
+docker run -d -p 3000:3000 grafana/grafana
 ```
 
 ## Integrate with your tools
