@@ -38,7 +38,7 @@ stages:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
-              goals: 'verifiy'
+              goals: 'verify'
 
           - task: PublishTestResults@2
             inputs:
