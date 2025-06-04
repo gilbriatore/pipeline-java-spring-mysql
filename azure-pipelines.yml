@@ -51,7 +51,7 @@ stages:
               find $(System.DefaultWorkingDirectory) -name 'jacoco.xml'
             displayName: 'Debug: Procurar jacoco.xml'
 
-          - task: PublishCodeCoverageResults@1
+          - task: PublishCodeCoverageResults@2
             inputs:
               codeCoverageTool: 'JaCoCo'
               summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/target/site/jacoco/jacoco.xml'
